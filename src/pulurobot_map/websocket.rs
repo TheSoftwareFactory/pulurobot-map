@@ -1,4 +1,4 @@
-use ws::{CloseCode, Error, Handler, Handshake, Message, Result, Sender};
+use ws::{CloseCode, Error, ErrorKind, Handler, Handshake, Message, Result, Sender};
 use serde_json::{self, Value};
 
 use map::Map;
@@ -25,14 +25,15 @@ impl Handler for WebSocket {
             Message::Binary(_) => String::new(),
         };
 
-        let data: Value = serde_json::from_str(&json).unwrap();
+        let data: Value = serde_json::from_str(&json)
+            .map_err(|e| Error::new(ErrorKind::Internal, e.to_string()))?;
         let kind = &data["type"];
         let val = &data["data"];
 
         match *kind {
             Value::String(ref t) if t == "get_map" => self.send_map(),
             Value::String(ref t) if t == "set_point" => self.set_point(val),
-            _ => Ok(()),
+            _ => self.unknown_command(),
         }
     }
 
@@ -74,5 +75,14 @@ impl WebSocket {
 
         self.map.set(x, y, free);
         self.send_map()
+    }
+
+    fn unknown_command(&self) -> Result<()> {
+        self.out.send(
+            json!({
+                "type": "unkown",
+                "data": "undefined"
+            }).to_string(),
+        )
     }
 }

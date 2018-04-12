@@ -3,11 +3,15 @@ use super::db;
 
 pub struct Map {
     points: HashMap<(i64, i64), bool>,
+    table_name: String,
 }
 
 impl Map {
     pub fn new() -> Self {
-        Map { points: HashMap::new() }
+        Map {
+            points: HashMap::new(),
+            table_name: String::new(),
+        }
     }
 
     pub fn from_db(map_name: &str) -> Self {
@@ -22,11 +26,14 @@ impl Map {
         }).unwrap();
 
         let mut map = Map::new();
+        map.table_name = map_name.to_string();
+
         for point in point_iter {
             if let Ok(((x, y), status)) = point {
-                map.set(x, y, status == 0);
+                map.points.insert((x, y), status == 0);
             }
         }
+
         map
     }
 
@@ -40,5 +47,15 @@ impl Map {
 
     pub fn set(&mut self, x: i64, y: i64, free: bool) {
         self.points.insert((x, y), free);
+
+        let status = match free {
+            true => 0,
+            false => 1,
+        };
+
+        let conn = db::get_connection();
+        let query = format!("INSERT INTO {} (x, y, status) VALUES ({}, {}, {})", self.table_name, x, y, status);
+        println!("{}", query);
+        conn.execute(&query, &[]);
     }
 }
