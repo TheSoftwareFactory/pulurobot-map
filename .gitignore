@@ -1,4 +1,3 @@
-.gitignore
 .DS_Store
 target/
 express-server/node_modules/
