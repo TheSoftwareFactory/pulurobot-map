@@ -29,9 +29,8 @@
     <script src="https://unpkg.com/leaflet@1.0.1/dist/leaflet.js"></script>
     <script>
         var unit = 2
-        var boxes = []
         var map = new L.Map('map', { center: [0, 0], zoom: 1 });
-        window.geoJSON = L.geoJSON(boxes, {
+        window.geoJSON = L.geoJSON([], {
             style: function (feature) {
                 switch (feature.properties.free) {
                     case true: return { color: "#aaaaaa", weight: 1, fill: true, fillOpacity: 1, fillColor: "#ffffff" };
