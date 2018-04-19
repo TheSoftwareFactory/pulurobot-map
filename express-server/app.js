@@ -49,7 +49,14 @@ app.use(function(err, req, res, next) {
   res.render('error');
 });
 
-
+/*##################################################
+# Class declaration for a Map. Allows to retrieve db
+# data and add a point into the db. Also have basic
+# constructor and getters.
+#
+# point : Array of point info, e.g: [[x,y], status]
+# map_name : Name wanted for the actual Map object
+##################################################*/
 class Map{
 
   constructor(points, map_name){
@@ -65,7 +72,7 @@ class Map{
     return this.map_name;
   }
 
-  setPoints(table_name, x, y, free){
+  setPoint(table_name, x, y, free){
     this.points.push([[x, y], free]);
 
     let sql = 'INSERT INTO '+table_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
@@ -102,7 +109,23 @@ class Map{
 
 }
 
-var server = http.createServer(app);
+/*##################################################
+# Implementation of the Websocket (server part).
+# Creation of the server and listening port, and
+# taking in consideration "on request",
+# "on message" and "on close" actions.
+##################################################*/
+
+var server = http.createServer(function(request, response) {
+    console.log((new Date()) + ' Received request for ' + request.url);
+    response.writeHead(404);
+    response.end();
+});
+
+server.listen(3010, function() {
+    console.log((new Date()) + ' Server is listening on port 3010');
+});
+
 
 var wsServer = new WebSocketServer({
     httpServer: server,
@@ -124,14 +147,47 @@ wsServer.on('request', function(request) {
 
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + ' Connection accepted.');
+
+    function sendMap() {
+        if (connection.connected) {
+
+          let res = testMap.getPoints();
+
+          let json = {
+            kind: "get_map",
+            data: res
+          }
+
+            connection.sendUTF(JSON.stringify(json));
+            setTimeout(sendMap, 1000);
+        }
+    }
+
     connection.on('message', function(message) {
+      console.log("Actual message here ?");
         if (message.type === 'utf8') {
-            console.log('Received Message: ' + message.utf8Data);
-            connection.sendUTF(message.utf8Data);
+
+          console.log("Here is the actual message : "+message);
+          let json = message.utf8Data;
+          let data = JSON.parse(json);
+
+          if (data.kind == 'get_map') {
+            sendMap();
+          }
+          else if (data.kind == 'set_point') {
+            setPoint(val);
+          }
+
+          console.log('Received Message: ' + message.utf8Data);
+          connection.sendUTF(message.utf8Data);
         }
         else if (message.type === 'binary') {
-            console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-            connection.sendBytes(message.binaryData);
+          console.log("BINARY...");
+          console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
+          connection.sendBytes(message.binaryData);
+        }
+        else{
+          console.log("What happens then ?");
         }
     });
     connection.on('close', function(reasonCode, description) {
@@ -139,11 +195,59 @@ wsServer.on('request', function(request) {
     });
 });
 
+
+/*##################################################
+# Implementation of the Websocket (client part).
+# Creation of the client, and taking in consideration
+# "on connect", "on connect failed", "on error",
+# "on message", and "on close" actions.
+##################################################*/
+
+var WebSocketClient = require('websocket').client;
+
+var client = new WebSocketClient();
+
+client.on('connectFailed', function(error) {
+    console.log('Connect Error: ' + error.toString());
+});
+
+client.on('connect', function(connection) {
+    console.log('WebSocket Client Connected');
+    connection.on('error', function(error) {
+        console.log("Connection Error: " + error.toString());
+    });
+    connection.on('close', function() {
+        console.log('echo-protocol Connection Closed');
+    });
+    connection.on('message', function(message) {
+        if (message.type === 'utf8') {
+            console.log("Received: '" + message.utf8Data + "'");
+        }
+    });
+
+    function sendMap() {
+        if (connection.connected) {
+
+          let res = testMap.getPoints();
+
+          let json = {
+            kind: "get_map",
+            data: res
+          }
+
+            connection.sendUTF(JSON.stringify(json));
+            setTimeout(sendMap, 1000);
+        }
+    }
+
+    sendMap(connection);
+
+});
+
 var testMap = new Map([], "testMap");
-testMap.getPoints();
-testMap.getMapName();
 testMap.getFromDB("map_v1");
 
+client.connect('ws://localhost:3010', 'echo-protocol');
 
 
 

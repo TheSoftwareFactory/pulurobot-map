@@ -56,8 +56,8 @@
                 }
             }
         }
-/*
-        var ws = new WebSocket("ws://localhost:3000");
+
+        /*var ws = new WebSocket("ws://localhost:3010/ws");
         ws.onopen = function(event) {
             ws.send(JSON.stringify({
                 type: "get_map",
@@ -76,10 +76,10 @@
             }
         }
 
-        ws.onerror = function(event){
-          console.log(event);
-        }
-*/
+        ws.onerror = function(err){
+          console.error(err);
+        }*/
+
         function on_get_map(points) {
             points.forEach(function(point) {
                 window.geoJSON.addData(buildPoint(point[0], point[1], point[2]))
