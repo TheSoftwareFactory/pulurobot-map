@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.1/dist/leaflet.css" />
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        html,
+        body,
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .leaflet-container {
+            background-color: #000000;
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <h2>Login</h2>
+        <form action="/login" method="post">
+            <div>
+                Username
+                <input
+                type="text"
+                name="username"
+                value=""
+                onChange=""
+                />
+            </div>
+            <div>
+                Password
+                <input
+                type="password"
+                name="password"
+                value=""
+                onChange=""
+                />
+            </div>
+            <button type="submit">Login</button>
+        </form>
+    </div>
+</body>
