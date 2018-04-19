@@ -59,6 +59,7 @@ app.use(function(err, req, res, next) {
 # point : Array of point info, e.g: [[x,y], status]
 # map_name : Name wanted for the actual Map object
 ##################################################*/
+
 class Map{
 
   constructor(points, map_name){
