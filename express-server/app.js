@@ -52,29 +52,29 @@ app.use(function(err, req, res, next) {
 
 class Map{
 
-  constructor(points, table_name){
+  constructor(points, map_name){
     this.points = points;
-    this.table_name = table_name;
+    this.map_name = map_name;
   }
 
   getPoints(){
     return this.points;
   }
 
-  getTableName(){
-    return this.table_name;
+  getMapName(){
+    return this.map_name;
   }
 
-  setPoints(x, y, free){
-    this.points.insert((x, y), free);
+  setPoints(table_name, x, y, free){
+    this.points.push([[x, y], free]);
 
-    let sql = 'INSERT INTO '+this.table_name+' (x, y, status) VALUES (?, ?, ?)';
-    db.run(sql, [x, y, free], function(err){
+    let sql = 'INSERT INTO '+table_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
+    db.run(sql, function(err){
       if (err){
         return console.error(err.message);
       }
       else{
-        return console.log('Row added successfully.')
+        console.log('Row added successfully.')
       }
     });
   }
@@ -88,10 +88,13 @@ class Map{
           return console.error('Error : result is undefined.');
         }
         else{
-          let x = map.rowid(0);
-          let y = map.rowid(1);
-          let free = map.rowid(2);
-          this.points.insert((x,y), free);
+          for (var i = 0; i<map[0].length; i++){
+            let x = map[0][i].x;
+            let y = map[0][i].y;
+            let free = map[0][i].status;
+            this.points.push([[x,y], free]);
+          }
+          console.log(this.points);
         }
       }
     )
@@ -135,6 +138,12 @@ wsServer.on('request', function(request) {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
     });
 });
+
+var testMap = new Map([], "testMap");
+testMap.getPoints();
+testMap.getMapName();
+testMap.getFromDB("map_v1");
+
 
 
 
