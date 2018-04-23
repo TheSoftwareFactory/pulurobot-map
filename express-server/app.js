@@ -76,7 +76,7 @@ class Map{
   }
 
   setPoint(table_name, x, y, free){
-    this.points.push([[x, y], free]);
+    this.points.push([x, y, free]);
 
     let sql = 'INSERT INTO '+table_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
     db.run(sql, function(err){
@@ -102,9 +102,8 @@ class Map{
             let x = map[0][i].x;
             let y = map[0][i].y;
             let free = map[0][i].status;
-            this.points.push([[x,y], free]);
+            this.points.push([x,y, free]);
           }
-          console.log(this.points);
         }
       }
     )
@@ -120,15 +119,10 @@ class Map{
 ##################################################*/
 
 var server = http.createServer(function(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
+    console.log((new Date()) + ' (ws-server) Received request for ' + request.url);
     response.writeHead(404);
     response.end();
 });
-
-server.listen(3010, function() {
-    console.log((new Date()) + ' Server is listening on port 3010');
-});
-
 
 var wsServer = new WebSocketServer({
     httpServer: server,
@@ -144,138 +138,96 @@ wsServer.on('request', function(request) {
     if (!originIsAllowed(request.origin)) {
       // Make sure we only accept requests from an allowed origin
       request.reject();
-      console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+      console.log((new Date()) + '(ws-server) Connection from origin ' + request.origin + ' rejected.');
       return;
     }
 
     var connection = request.accept('echo-protocol', request.origin);
-    console.log((new Date()) + ' Connection accepted.');
-
-    function sendMap() {
-        if (connection.connected) {
-
-          let res = testMap.getPoints();
-
-          let json = {
-            kind: "get_map",
-            data: res
-          }
-
-            connection.sendUTF(JSON.stringify(json));
-            setTimeout(sendMap, 1000);
-        }
-    }
+    console.log((new Date()) + '(ws-server) Connection accepted.');
 
     connection.on('message', function(message) {
-      console.log("Actual message here ?");
-        if (message.type === 'utf8') {
 
-          console.log("Here is the actual message : "+message);
-          let json = message.utf8Data;
-          let data = JSON.parse(json);
+      function sendMap() {
+          if (connection.connected) {
 
-          if (data.kind == 'get_map') {
-            sendMap();
+            let res = testMap.getPoints();
+
+            let json = {
+              type: "get_map",
+              data: res
+            }
+
+            connection.send(JSON.stringify(json));
           }
-          else if (data.kind == 'set_point') {
-            setPoint(val);
-          }
+      }
 
-          console.log('Received Message: ' + message.utf8Data);
-          connection.sendUTF(message.utf8Data);
+      function setPoint(val){
+        for (var i = 0; i < val.length; i++ ){
+          let x = val[i][0];
+          let y = val[i][1];
+          let free = val[i][2];
+          testMap.setPoint("map_v1", x, y, free);
+          sendMap();
         }
-        else if (message.type === 'binary') {
-          console.log("BINARY...");
-          console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-          connection.sendBytes(message.binaryData);
+      }
+
+      function unknownCommand(){
+        let json = {
+          type: "unknown",
+          data: "undefined"
         }
-        else{
-          console.log("What happens then ?");
+
+        connection.send(JSON.stringify(json));
+      }
+
+      if (message.type === 'utf8') {
+
+        console.log('(ws-server) Received Message: ' + message.utf8Data);
+        connection.sendUTF(message.utf8Data);
+
+        let json = message.utf8Data;
+        let data = JSON.parse(json);
+        let type = data.type;
+        let val = data.data;
+
+        if (type == 'get_map') {
+          sendMap();
         }
+
+        else if (kind == 'set_point') {
+          setPoint(val);
+        }
+
+        else {
+          unknownCommand();
+        }
+      }
+
+      else if (message.type === 'binary') {
+        console.log('(ws-server) Received Binary Message of ' + message.binaryData.length + ' bytes');
+        connection.sendBytes(message.binaryData);
+      }
+      else{
+        console.log("(ws-server) Message is neither utf8 or binary.");
+      }
     });
+
     connection.on('close', function(reasonCode, description) {
-        console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+      console.log((new Date()) + '(ws-server) Peer ' + connection.remoteAddress + ' disconnected.');
     });
 });
 
 
-/*##################################################
-# Implementation of the Websocket (client part).
-# Creation of the client, and taking in consideration
-# "on connect", "on connect failed", "on error",
-# "on message", and "on close" actions.
-##################################################*/
-
-var WebSocketClient = require('websocket').client;
-
-var client = new WebSocketClient();
-
-client.on('connectFailed', function(error) {
-    console.log('Connect Error: ' + error.toString());
-});
-
-client.on('connect', function(connection) {
-    console.log('WebSocket Client Connected');
-    connection.on('error', function(error) {
-        console.log("Connection Error: " + error.toString());
-    });
-    connection.on('close', function() {
-        console.log('echo-protocol Connection Closed');
-    });
-    connection.on('message', function(message) {
-        if (message.type === 'utf8') {
-            console.log("Received: '" + message.utf8Data + "'");
-        }
-    });
-
-    function sendMap() {
-        if (connection.connected) {
-
-          let res = testMap.getPoints();
-
-          let json = {
-            kind: "get_map",
-            data: res
-          }
-
-            connection.sendUTF(JSON.stringify(json));
-            setTimeout(sendMap, 1000);
-        }
-    }
-
-    sendMap(connection);
-
-});
+/*####################################
+Test zone
+####################################*/
 
 var testMap = new Map([], "testMap");
 testMap.getFromDB("map_v1");
 
-client.connect('ws://localhost:3010', 'echo-protocol');
+server.listen(3010, function() {
+    console.log((new Date()) + ' (ws-server) Server is listening on port 3010');
+});
 
-
-
-
-/*
-
-//Example of database's interaction with sqlite3 module
-
-db.serialize(function () {
-  db.run('CREATE TABLE lorem (info TEXT)')
-  var stmt = db.prepare('INSERT INTO lorem VALUES (?)')
-
-  for (var i = 0; i < 10; i++) {
-    stmt.run('Ipsum ' + i)
-  }
-
-  stmt.finalize()
-
-  db.each('SELECT rowid AS id, info FROM lorem', function (err, row) {
-    console.log(row.id + ': ' + row.info)
-  })
-})
-
-db.close()
-
-*/
 
 module.exports = app;
