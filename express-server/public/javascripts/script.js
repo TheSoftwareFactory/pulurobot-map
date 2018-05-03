@@ -1,6 +1,7 @@
 var unit = 2
 var boxes = []
-var map = new L.Map('map', { center: [0, 0], zoom: 1 });
+var map = new L.Map('map', { center: [0, 0], zoom: 0 });
+
 window.geoJSON = L.geoJSON(boxes, {
     style: function (feature) {
         switch (feature.properties.free) {
@@ -16,8 +17,6 @@ function buildPoint(x, y, free) {
     var tr = [x * unit + unit, y * unit]
     var br = [x * unit + unit, y * unit - unit]
     var bl = [x * unit, y * unit - unit]
-
-    console.log(tl, tr, br, bl);
 
     return {
         "type": "Feature",
@@ -38,14 +37,14 @@ ws.onopen = function(event) {
 }
 
 ws.onmessage = function(msg) {
-    var message = JSON.parse(msg.data)
+    var message = JSON.parse(msg.data);
 
     if (message.data != undefined){
       console.log("Points are available.");
       switch (message.type) {
           case "get_map": on_get_map(message.data); break;
           case "get_point": on_get_point(message.data); break;
-          default: console.log(message)
+          default: console.log(message);
       }
     }
 
@@ -61,9 +60,9 @@ ws.onerror = function(err){
 function on_get_map(points) {
     points.forEach(function(point) {
         window.geoJSON.addData(buildPoint(point[0], point[1], point[2]))
-    })
+    });
 }
 
 function on_get_point(point) {
-    geoJSON.addData(buildPoint(point[0], point[1], point[2]))
+    window.geoJSON.addData(buildPoint(point[0], point[1], point[2]))
 }

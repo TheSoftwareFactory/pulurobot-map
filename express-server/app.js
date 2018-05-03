@@ -166,6 +166,7 @@ wsServer.on('request', function(request) {
           let x = val[i][0];
           let y = val[i][1];
           let free = val[i][2];
+          
           testMap.setPoint("map_v1", x, y, free);
           sendMap();
         }
@@ -194,7 +195,7 @@ wsServer.on('request', function(request) {
           sendMap();
         }
 
-        else if (kind == 'set_point') {
+        else if (type == 'set_point') {
           setPoint(val);
         }
 
