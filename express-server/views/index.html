@@ -6,11 +6,31 @@
     <link rel="stylesheet" href="/stylesheets/leaflet.css" />
     <link rel="stylesheet" href="/stylesheets/style.css" />
     <script src="/javascripts/leaflet.js"></script>
+		<script src="/javascripts/script.js"></script>
 </head>
 
 <body>
+		<header></header>
     <div id="map"></div>
-    <script src="/javascripts/script.js"></script>
+		<section id="actions">
+			<ul>
+				<li id="retrieve_map">
+					<p>Retrieve a map from database</p>
+					<label for="map_name_label">Map name: </label>
+					<input type="text" id="map_name" name="name" placeholder="E.g 'tunnel', 'factory_room',..."value="">
+					<button id="submit">Ok</button>
+				</li>
+
+				<li id="maps_list">
+					<p>Choose a pre-loaded map</p>
+					<label for="map_from_list">Map: </label>
+					<select id="map_from_list">
+						<option value="val1" selected>No pre-loaded map available.</option>
+					</select>
+				</li>
+
+			</ul>
+		</section>
 </body>
 
 </html>

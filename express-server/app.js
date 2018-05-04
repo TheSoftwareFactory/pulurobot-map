@@ -60,34 +60,40 @@ app.use(function(err, req, res, next) {
 # map_name : Name wanted for the actual Map object
 ##################################################*/
 
-class Map{
+class RobotMap{
 
-  constructor(points, map_name){
-    this.points = points;
-    this.map_name = map_name;
+  constructor(robot_map_name, points){
+    this.robot_map_name = robot_map_name;
+		this.points = points;
   }
 
-  getPoints(){
+  getRobotMapName(){
+    return this.robot_map_name;
+  }
+
+	getPoints(){
     return this.points;
   }
 
-  getMapName(){
-    return this.map_name;
-  }
-
-  setPoint(table_name, x, y, free){
+  setPoint(x, y, free){
     this.points.push([x, y, free]);
 
-    let sql = 'INSERT INTO '+table_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
+    let sql = 'INSERT INTO '+this.robot_map_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
     db.run(sql, function(err){
       if (err){
         return console.error(err.message);
       }
       else{
-        console.log('Row added successfully.')
+        console.log(x+', '+y+', '+', '+free+' added successfully.');
       }
     });
   }
+
+	setPoints(list_of_points){
+		for (var i = 0; i < list_of_points; i++){
+			setPoint(list_of_points[i][0],list_of_points[i][1],list_of_points[i][2]);
+		}
+	}
 
   getFromDB(map_name){
     return Promise.all([
@@ -110,6 +116,65 @@ class Map{
   }
 
 }
+
+/*##################################################
+#	Class declaration for a list of Map objects. Allows
+#	to store different maps in order to manage different
+#	environments for the robot.
+#
+##################################################*/
+
+class Maplist{
+
+	constructor (maplist_name, list_of_maps){
+		this.maplist_name = maplist_name;
+		this.list_of_maps = list_of_maps;
+	}
+
+	getMaplistName(){
+		return this.maplist_name;
+	}
+
+	getMaplist(){
+		return this.list_of_maps;
+	}
+
+	getMaplistNames(){
+		let list_of_names = [];
+		for (var i = 0; i < this.list_of_maps.length; i++){
+			list_of_names.push(this.list_of_maps[i].getRobotMapName());
+		}
+
+		return list_of_names;
+	}
+
+	getMaplistPoints(){
+		let list_of_points = [];
+		for (var i = 0; i < this.list_of_maps.length; i++){
+			list_of_points.push(this.list_of_maps[i].getPoints());
+		}
+
+		return list_of_points;
+	}
+
+	getMapFromName(name){
+		var map_from_name = this.list_of_maps.find(function(elt){
+			return elt.getRobotMapName() == name;
+		});
+
+		return map_from_name;
+	}
+
+	setMap(new_map){
+		if(new_map instanceof RobotMap == false){
+			return console.error("Added object must be of instance 'RobotMap'.");
+		}
+		else{
+			this.list_of_maps.push(new_map);
+		}
+	}
+}
+
 
 /*##################################################
 # Implementation of the Websocket (server part).
@@ -147,12 +212,13 @@ wsServer.on('request', function(request) {
 
     connection.on('message', function(message) {
 
-      function sendMap() {
+      function sendMap(map) {
           if (connection.connected) {
 
-            let res = testMap.getPoints();
+            let res = map.getPoints();
 
             let json = {
+							name: map.getRobotMapName(),
               type: "get_map",
               data: res
             }
@@ -161,13 +227,13 @@ wsServer.on('request', function(request) {
           }
       }
 
-      function setPoint(val){
+      function setPoint(map, name, val){
         for (var i = 0; i < val.length; i++ ){
           let x = val[i][0];
           let y = val[i][1];
           let free = val[i][2];
-          
-          testMap.setPoint("map_v1", x, y, free);
+
+          map.setPoint(name.toString(), x, y, free);
           sendMap();
         }
       }
@@ -188,11 +254,22 @@ wsServer.on('request', function(request) {
 
         let json = message.utf8Data;
         let data = JSON.parse(json);
+				let name = data.name;
         let type = data.type;
         let val = data.data;
 
+				if (testMaplist.getMaplistNames().includes(name) == false){
+					var map = new RobotMap(name,[]);
+					map.getFromDB(name);
+					testMaplist.setMap(map);
+				}
+
+				else{
+					var map = testMaplist.getMapFromName(name);
+				}
+
         if (type == 'get_map') {
-          sendMap();
+          sendMap(map);
         }
 
         else if (type == 'set_point') {
@@ -223,12 +300,13 @@ wsServer.on('request', function(request) {
 Test zone
 ####################################*/
 
-var testMap = new Map([], "testMap");
-testMap.getFromDB("map_v1");
-
 server.listen(3010, function() {
     console.log((new Date()) + ' (ws-server) Server is listening on port 3010');
 });
+
+var testMap = new RobotMap("map_v1", []);
+testMap.getFromDB("map_v1");
+var testMaplist = new Maplist("testMaplist", [testMap]);
 
 
 module.exports = app;
