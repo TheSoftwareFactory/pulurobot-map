@@ -1,7 +1,9 @@
 html,
 body {
+		font-family: 'Open Sans', sans-serif;
     height: 100%;
     width: 100%;
+		background-color: #E4EEF0;
 }
 
 #navbar {
@@ -10,7 +12,7 @@ body {
 		margin-bottom: 1%;
     width: 98%;
     text-align: center;
-    background-color: #2a2829;
+    background-color: #121F27;
 
 }
 
@@ -32,7 +34,7 @@ body {
     display:inline-flex;
 		flex:auto;
 		margin-top:5px;
-		padding: 20px;
+		padding: 23px;
     color:white;
     text-decoration: none;
 }
@@ -53,24 +55,90 @@ li {
 }
 
 .nav{
-    background:rgb(99, 95, 97);
+    background:rgb(65, 98, 117);
     transition: all 0.3s ease 0s;
 }
 .nav:hover {
-    background: rgb(148, 153, 150);
+    background: rgb(97, 145, 168);
 }
 .nav:nth-of-type(odd){
 }
 
 #actions{
 	margin-left:1%;
+	width: 29%;
 }
 
 #map{
-	height: 80%;
-	width: 70%;
+	height: 85%;
+	width: 68%;
 	margin-right:1%;
 	float:right;
+}
+
+#retrieve_map{
+	background-color: #BBCFDA;
+	padding: 15px;
+	border-left: 2px solid white;
+}
+
+#maps_list{
+	padding: 15px;
+	border-left: 2px solid white;
+	border-top: 2px solid white;
+	border-bottom: 2px solid white;
+}
+
+#retrieve_from_robot{
+	background-color: #BBCFDA;
+	padding: 15px;
+	border-left: 2px solid white;
+}
+
+#submit_map_name{
+	float: right;
+	margin-left:6%;
+	padding-top:3%;
+	padding-bottom:3%;
+	padding-left:6%;
+	padding-right:6%;
+	background:rgb(65, 98, 117);
+	font-weight: bold;
+	transition: all 0.3s ease 0s;
+	border:1px solid white;
+	color: white;
+}
+
+#submit_map_name:hover {
+    background: rgb(97, 145, 168);
+}
+
+#submit_map_name:active {
+		fill: rgb(97, 145, 168);
+		background: rgb(35, 68, 87);
+}
+
+#submit_robot_id{
+	float:right;
+	margin-left:6%;
+	padding-top:3%;
+	padding-bottom:3%;
+	padding-left:6%;
+	padding-right:6%;
+	background:rgb(65, 98, 117);
+	font-weight: bold;
+	transition: all 0.3s ease 0s;
+	border:1px solid white;
+	color: white;
+}
+
+#submit_robot_id:hover {
+    background: rgb(97, 145, 168);
+}
+
+#submit_robot_id:active {
+		fill: rgb(97, 145, 168);
+		background: rgb(35, 68, 87);
 }
 
 .leaflet-container {

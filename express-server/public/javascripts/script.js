@@ -108,20 +108,20 @@ window.onload = function(){
 	}
 
 	var button_retrieve_map = document.getElementById("submit_map_name");
+	var button_retrieve_robot = document.getElementById("submit_robot_id");
+	var select = document.getElementById("map_from_list");
+
 	button_retrieve_map.addEventListener('click', function(){
 		geoJSON.clearLayers();
 		let map_name = document.getElementById("map_name").value;
 		retrieveMap(map_name);
 	});
 
-	var button_retrieve_robot = document.getElementById("submit_robot_id");
 	button_retrieve_robot.addEventListener('click', function(){
 		geoJSON.clearLayers();
 		let robot_id = document.getElementById('robot_id').value;
 		requestRobotHistory(robot_id);
 	})
-
-	var select = document.getElementById("map_from_list");
 
 	select.addEventListener("change", function() {
 		geoJSON.clearLayers();
