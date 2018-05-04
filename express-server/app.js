@@ -258,18 +258,45 @@ wsServer.on('request', function(request) {
         let type = data.type;
         let val = data.data;
 
-				if (testMaplist.getMaplistNames().includes(name) == false){
-					var map = new RobotMap(name,[]);
-					map.getFromDB(name);
-					testMaplist.setMap(map);
+				if (name == 'request_robot_history'){
+					let id = data.id;
+					var request = require('request'),
+    			uri = "http://192.168.43.97:3000/api/v1/station/robot/location/history?robot_id="+id,
+    			auth = "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.bt-HcLOMzZjeS_Zw6jc0lDH5SdaK0ZgZYIKXk5ont6w"
+
+					request(
+						{
+							uri : uri,
+							headers : {
+								"Authorization" : auth
+							}
+						},
+						function (error, response, body) {
+							var map_from_robot = mapFromRobotLocations(body);
+						}
+					);
+					testMaplist.setMap(map_from_robot);
+					sendMap(map_from_robot);
 				}
 
+				if (testMaplist.getMaplistNames().includes(name) == false){
+					var map = new RobotMap(name,[]);
+					var promise1 = Promise.resolve(map.getFromDB(name));
+					testMaplist.setMap(map);
+				}
 				else{
 					var map = testMaplist.getMapFromName(name);
 				}
 
         if (type == 'get_map') {
-          sendMap(map);
+					if(promise1!=undefined){
+						promise1.then(function(value){
+							sendMap(map);
+						});
+					}
+					else{
+						sendMap(map);
+					}
         }
 
         else if (type == 'set_point') {
@@ -295,6 +322,17 @@ wsServer.on('request', function(request) {
     });
 });
 
+//Retrieve the history of a robot's points from the server
+function mapFromRobotLocations(data){
+	let list_of_points = [];
+	for(var i = 0; i<data.length; i++){
+		let x = data[i].x;
+		let y = data[i].y;
+		list_of_points.push([x,y, 1]);
+	}
+	return new RobotMap("map_from_robot", list_of_points);
+}
+
 
 /*####################################
 Test zone
@@ -304,9 +342,7 @@ server.listen(3010, function() {
     console.log((new Date()) + ' (ws-server) Server is listening on port 3010');
 });
 
-var testMap = new RobotMap("map_v1", []);
-testMap.getFromDB("map_v1");
-var testMaplist = new Maplist("testMaplist", [testMap]);
+var testMaplist = new Maplist("testMaplist", []);
 
 
 module.exports = app;

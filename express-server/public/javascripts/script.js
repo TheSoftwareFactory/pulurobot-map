@@ -1,7 +1,7 @@
 window.onload = function(){
 	var unit = 2
 	var boxes = [];
-	var map = new L.Map('map', { center: [0, 0], zoom: 0 });
+	var map = new L.Map('map', { center: [0, 0], zoom: 3 });
 
 
 	window.geoJSON = L.geoJSON(boxes, {
@@ -46,14 +46,13 @@ window.onload = function(){
 			}
 
 			if(!names.includes(name)){
-				console.log(name);
-
-				list.options[select.options.length] = new Option(name, '0', false, false);
+				list.options[list.options.length] = new Option(name, '0', false, false);
+				names.push(name);
 			}
 	}
 
 	function on_get_point(point) {
-	    geoJSON.addData(buildPoint(point[0], point[1], point[2]))
+	    geoJSON.addData(buildPoint(point[0], point[1], point[2]));
 	}
 
 	var ws = new WebSocket("ws://localhost:3010", "echo-protocol");
@@ -88,32 +87,45 @@ window.onload = function(){
 	  console.error(err);
 	}
 
-	function retrieveMap(){
-		let map_name = document.getElementById("map_name").value;
-		if (map_name === ""){
+	function retrieveMap(name_of_map){
+		if (name_of_map === ""){
 			console.error("Map name is undefined. Input a valid name.");
 		}
 		else{
 			ws.send(JSON.stringify({
-					name: map_name,
+					name: name_of_map,
 	        type: "get_map",
 	        data: undefined
 	    }));
 		}
 	}
 
-	function displayMap(){
-
+	function requestRobotHistory(robot_id){
+		ws.send(JSON.stringify({
+				name: 'request_robot_history',
+				id: robot_id
+		}));
 	}
 
-	var button_retrieve = document.getElementById("submit");
-	button_retrieve.addEventListener('click', function(){
+	var button_retrieve_map = document.getElementById("submit_map_name");
+	button_retrieve_map.addEventListener('click', function(){
 		geoJSON.clearLayers();
-		retrieveMap();
+		let map_name = document.getElementById("map_name").value;
+		retrieveMap(map_name);
 	});
 
+	var button_retrieve_robot = document.getElementById("submit_robot_id");
+	button_retrieve_robot.addEventListener('click', function(){
+		let robot_id = document.getElementById('robot_id').value;
+		requestRobotHistory(robot_id);
+	})
+
 	var select = document.getElementById("map_from_list");
-	select.addEventListener('change', function(){
-		displayMap();
-	});
+
+	select.addEventListener("change", function() {
+		geoJSON.clearLayers();
+		let map_name = select.options[select.selectedIndex].text;
+		retrieveMap(map_name);
+});
+
 }
