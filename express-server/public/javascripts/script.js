@@ -1,7 +1,7 @@
 window.onload = function(){
 	var unit = 2
 	var boxes = [];
-	var map = new L.Map('map', { center: [0, 0], zoom: 3 });
+	var map = new L.Map('map', { center: [0, 0], zoom: 2 });
 
 
 	window.geoJSON = L.geoJSON(boxes, {
@@ -116,6 +116,7 @@ window.onload = function(){
 
 	var button_retrieve_robot = document.getElementById("submit_robot_id");
 	button_retrieve_robot.addEventListener('click', function(){
+		geoJSON.clearLayers();
 		let robot_id = document.getElementById('robot_id').value;
 		requestRobotHistory(robot_id);
 	})

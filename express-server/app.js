@@ -325,9 +325,11 @@ wsServer.on('request', function(request) {
 //Retrieve the history of a robot's points from the server
 function mapFromRobotLocations(data){
 	let list_of_points = [];
-	for(var i = 0; i<data.length; i++){
-		let x = data[i].x;
-		let y = data[i].y;
+	let json_data = JSON.parse(data);
+	console.log(json_data[0]);
+	for(var i = 0; i<json_data.length; i++){
+		let x = json_data[i].x;
+		let y = json_data[i].y;
 		list_of_points.push([x,y, 1]);
 	}
 	return new RobotMap("map_from_robot", list_of_points);
