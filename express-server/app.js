@@ -273,10 +273,10 @@ wsServer.on('request', function(request) {
 						},
 						function (error, response, body) {
 							var map_from_robot = mapFromRobotLocations(body);
+							testMaplist.setMap(map_from_robot);
+							sendMap(map_from_robot);
 						}
 					);
-					testMaplist.setMap(map_from_robot);
-					sendMap(map_from_robot);
 				}
 
 				if (testMaplist.getMaplistNames().includes(name) == false){
