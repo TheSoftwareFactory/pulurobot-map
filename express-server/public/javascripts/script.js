@@ -1,9 +1,10 @@
 window.onload = function(){
+	// Variables for the leaflet map
 	var unit = 2
 	var boxes = [];
 	var map = new L.Map('map', { center: [0, 0], zoom: 2 });
 
-
+	// Instanciate the geoJSON for the leaflet map
 	window.geoJSON = L.geoJSON(boxes, {
 	    style: function (feature) {
 	        switch (feature.properties.free) {
@@ -13,6 +14,7 @@ window.onload = function(){
 	    }
 	})
 	window.geoJSON.addTo(map);
+
 
 	function buildPoint(x, y, free) {
 	    var tl = [x * unit, y * unit]
@@ -30,7 +32,7 @@ window.onload = function(){
 	    }
 	}
 
-
+	// Global variables for pre-loaded maps
 	var names = [];
 
 	function on_get_map(name, points) {
@@ -38,11 +40,13 @@ window.onload = function(){
 	        geoJSON.addData(buildPoint(point[0], point[1], point[2]))
 	    });
 
+			// Reduce the length of the list to zero if no maps are in it
 			let list = document.getElementById('map_from_list');
 			if(list.selectedOptions[0].text=="No pre-loaded map available."){
 				list.options.length = 0;
 			}
 
+			// Re-construct the list of preloaded maps
 			if(!names.includes(name)){
 				list.options[list.options.length] = new Option(name, '0', false, false);
 				names.push(name);
@@ -53,20 +57,24 @@ window.onload = function(){
 	    geoJSON.addData(buildPoint(point[0], point[1], point[2]));
 	}
 
+	// Instanciate the websocket client
 	var ws = new WebSocket("ws://localhost:3010", "echo-protocol");
 	ws.onopen = function(event) {
 
 	}
 
+	// Actions when receiving message
 	ws.onmessage = function(msg) {
 	    var message = JSON.parse(msg.data);
 			console.log(message);
 
+			// If we don't get anything yet => let's wait for points
 			if (message.data == undefined){
 				console.log("Waiting for points...");
 			}
 
 	    else {
+				// If we get any of these, then no maps/points are available.
 				if(message.data == "undefined" || message.data =="nomap" || message.data.length == 0){
 					console.log("No points available.");
 					var info = document.getElementById("information");
@@ -81,6 +89,7 @@ window.onload = function(){
 					}
 				}
 
+				// If we get this one, then timeout to request the server has been reached.
 				else if(message.data == "noserver"){
 					console.log("No response from server.");
 					var info = document.getElementById("information");
@@ -95,6 +104,7 @@ window.onload = function(){
 					}
 				}
 
+				// If we have gone through everything, then the map/points are ready to be send.
 				else{
 					console.log("Points are available.");
 					var info = document.getElementById("information");
@@ -116,6 +126,7 @@ window.onload = function(){
 	  console.error(err);
 	}
 
+	// Request map/points from database
 	function retrieveMap(name_of_map){
 		if (name_of_map === ""){
 			console.error("Map name is undefined. Input a valid name.");
@@ -139,6 +150,7 @@ window.onload = function(){
 		}
 	}
 
+	// Request map/points of a robot itself through the server
 	function requestRobotHistory(robot_id){
 		ws.send(JSON.stringify({
 				name: 'request_robot_history',
@@ -150,18 +162,21 @@ window.onload = function(){
 	var button_retrieve_robot = document.getElementById("submit_robot_id");
 	var select = document.getElementById("map_from_list");
 
+	// Listener to request map/points from database
 	button_retrieve_map.addEventListener('click', function(){
 		geoJSON.clearLayers();
 		let map_name = document.getElementById("map_name").value;
 		retrieveMap(map_name);
 	});
 
+	// Listener to request map/points of a robot from server
 	button_retrieve_robot.addEventListener('click', function(){
 		geoJSON.clearLayers();
 		let robot_id = document.getElementById('robot_id').value;
 		requestRobotHistory(robot_id);
 	})
 
+	// Listener of change in the pre-loaded map list
 	select.addEventListener("change", function() {
 		geoJSON.clearLayers();
 		let map_name = select.options[select.selectedIndex].text;

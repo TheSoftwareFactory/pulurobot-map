@@ -1,8 +1,10 @@
-const Sqlite = require('sqlite-pool');
+// Declaration of the environment constants
 const Promise = require('bluebird');
 const port = process.env.port || 3000;
-const db = new Sqlite('../artifacts/maps.db', {Promise});
 
+// Declaration of the environment variables
+var RobotMap = require('./models/robotmap');
+var Maplist = require('./models/maplist');
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
@@ -10,8 +12,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var http = require('http');
 var WebSocketServer = require('websocket').server;
-var WebSocket = require('ws')
 
+// Variables of the router
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var loginRouter = require('./routes/login');
@@ -52,133 +54,6 @@ app.use(function(err, req, res, next) {
 });
 
 /*##################################################
-# Class declaration for a Map. Allows to retrieve db
-# data and add a point into the db. Also have basic
-# constructor and getters.
-#
-# point : Array of point info, e.g: [[x,y], status]
-# map_name : Name wanted for the actual Map object
-##################################################*/
-
-class RobotMap{
-
-  constructor(robot_map_name, points){
-    this.robot_map_name = robot_map_name;
-		this.points = points;
-  }
-
-  getRobotMapName(){
-    return this.robot_map_name;
-  }
-
-	getPoints(){
-    return this.points;
-  }
-
-  setPoint(x, y, free){
-    this.points.push([x, y, free]);
-
-    let sql = 'INSERT INTO '+this.robot_map_name+' (x, y, status) VALUES ('+x+', '+y+', '+free+')';
-    db.run(sql, function(err){
-      if (err){
-        return console.error(err.message);
-      }
-      else{
-        console.log(x+', '+y+', '+', '+free+' added successfully.');
-      }
-    });
-  }
-
-	setPoints(list_of_points){
-		for (var i = 0; i < list_of_points; i++){
-			setPoint(list_of_points[i][0],list_of_points[i][1],list_of_points[i][2]);
-		}
-	}
-
-  getFromDB(map_name){
-    return Promise.all([
-      db.all('SELECT x, y, status FROM '+map_name)
-    ]).then(
-      (map)=>{
-        if(map===undefined){
-          return console.error('Error : result is undefined.');
-        }
-        else{
-          for (var i = 0; i<map[0].length; i++){
-            let x = map[0][i].x;
-            let y = map[0][i].y;
-            let free = map[0][i].status;
-            this.points.push([x,y, free]);
-          }
-        }
-      }
-    ).catch(function(error){
-			console.error(error);
-		})
-  }
-
-}
-
-/*##################################################
-#	Class declaration for a list of Map objects. Allows
-#	to store different maps in order to manage different
-#	environments for the robot.
-#
-##################################################*/
-
-class Maplist{
-
-	constructor (maplist_name, list_of_maps){
-		this.maplist_name = maplist_name;
-		this.list_of_maps = list_of_maps;
-	}
-
-	getMaplistName(){
-		return this.maplist_name;
-	}
-
-	getMaplist(){
-		return this.list_of_maps;
-	}
-
-	getMaplistNames(){
-		let list_of_names = [];
-		for (var i = 0; i < this.list_of_maps.length; i++){
-			list_of_names.push(this.list_of_maps[i].getRobotMapName());
-		}
-
-		return list_of_names;
-	}
-
-	getMaplistPoints(){
-		let list_of_points = [];
-		for (var i = 0; i < this.list_of_maps.length; i++){
-			list_of_points.push(this.list_of_maps[i].getPoints());
-		}
-
-		return list_of_points;
-	}
-
-	getMapFromName(name){
-		var map_from_name = this.list_of_maps.find(function(elt){
-			return elt.getRobotMapName() == name;
-		});
-
-		return map_from_name;
-	}
-
-	setMap(new_map){
-		if(new_map instanceof RobotMap == false){
-			return console.error("Added object must be of instance 'RobotMap'.");
-		}
-		else{
-			this.list_of_maps.push(new_map);
-		}
-	}
-}
-
-
-/*##################################################
 # Implementation of the Websocket (server part).
 # Creation of the server and listening port, and
 # taking in consideration "on request",
@@ -212,6 +87,7 @@ wsServer.on('request', function(request) {
     var connection = request.accept('echo-protocol', request.origin);
     console.log((new Date()) + '(ws-server) Connection accepted.');
 
+		// Actions when receiving message
     connection.on('message', function(message) {
 
       function sendMap(map) {
@@ -249,17 +125,20 @@ wsServer.on('request', function(request) {
         connection.send(JSON.stringify(json));
       }
 
+			// Verification of the message type
       if (message.type === 'utf8') {
 
         console.log('(ws-server) Received Message: ' + message.utf8Data);
         connection.sendUTF(message.utf8Data);
 
+				// Creation of variable to analyze the message
         let json = message.utf8Data;
         let data = JSON.parse(json);
 				let name = data.name;
         let type = data.type;
         let val = data.data;
 
+				// Case where the client request the robot's history itself
 				if (name == 'request_robot_history'){
 					let id = data.id;
 					var request = require('request'),
@@ -291,6 +170,7 @@ wsServer.on('request', function(request) {
 					);
 				}
 
+				// Case where a map is requested from the database
 				else{
 					if (testMaplist.getMaplistNames().includes(name) == false){
 						var map = new RobotMap(name,[]);
@@ -322,10 +202,13 @@ wsServer.on('request', function(request) {
 				}
       }
 
+			// Verification of the message type
       else if (message.type === 'binary') {
         console.log('(ws-server) Received Binary Message of ' + message.binaryData.length + ' bytes');
         connection.sendBytes(message.binaryData);
       }
+
+			// Verification of the message type
       else{
         console.log("(ws-server) Message is neither utf8 or binary.");
       }
@@ -336,7 +219,7 @@ wsServer.on('request', function(request) {
     });
 });
 
-//Retrieve the history of a robot's points from the server
+// Retrieve the history of a robot's points from the server
 function mapFromRobotLocations(data){
 	let list_of_points = [];
 	if (data != undefined){
@@ -356,7 +239,7 @@ function mapFromRobotLocations(data){
 
 
 /*####################################
-Test zone
+Run/Test zone
 ####################################*/
 
 server.listen(3010, function() {
