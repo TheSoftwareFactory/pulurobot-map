@@ -76,13 +76,13 @@ li {
 	float:right;
 }
 
-#retrieve_map{
+#maps_list{
 	background-color: #BBCFDA;
 	padding: 15px;
 	border-left: 2px solid white;
 }
 
-#maps_list{
+#retrieve_map{
 	padding: 15px;
 	border-left: 2px solid white;
 	border-top: 2px solid white;

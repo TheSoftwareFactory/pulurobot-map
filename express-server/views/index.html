@@ -13,8 +13,8 @@
 <body>
 		<nav id="navbar">
 			<ul>
-				<li class="nav"><a href="index.html" title="Go to homepage">Home</a></li>
-				<li class="nav"><a href="index.html" id="afAr" title="Go to maps tool">Maps</a></li>
+				<li class="nav"><a href="/" title="Go to homepage">Home</a></li>
+				<li class="nav"><a href="/" id="afAr" title="Go to maps tool">Maps</a></li>
 				<li><h1 id="navtitle">Robot Maps Tool</h1></li>
 				<li class="nav"><a target="_blank" href="https://www.helsinki.fi/en" title="Go to University of Helsinki webpage">U.H</a></li>
 				<li class=nav><a href="mailto:dev.pincon@gmail.com" title="Send mail to admin">Contact</a></li>
@@ -23,13 +23,6 @@
     <div id="map"></div>
 		<section id="actions">
 			<ul>
-				<li id="retrieve_map">
-					<p>Retrieve a map from database</p>
-					<label for="map_name">Map name: </label>
-					<input type="text" id="map_name" name="name" placeholder="E.g 'tunnel', 'factory_room',..."value="">
-					<button id="submit_map_name">OK</button>
-				</li>
-
 				<li id="maps_list">
 					<p>Choose a pre-loaded map</p>
 					<label for="map_from_list">Map: </label>
@@ -37,15 +30,21 @@
 						<option value="val1" selected>No pre-loaded map available.</option>
 					</select>
 				</li>
+				
+				<li id="retrieve_map">
+					<p>Retrieve a map from database</p>
+					<label for="map_name">Map name: </label>
+					<input type="text" id="map_name" name="name" placeholder="E.g 'tunnel', 'factory_room',..."value="">
+					<button id="submit_map_name">OK</button>
+				</li>
 
 				<li id="retrieve_from_robot">
 					<p>Retrieve robot locations history</p>
 					<label for="robot_id">Robot ID: </label>
 					<input type="text" id="robot_id" name="id" placeholder="E.g 1, 2, ..."value="">
 					<button id="submit_robot_id">OK</button>
-
-
 			</ul>
+			<p id="information"></p>
 		</section>
 </body>
 

@@ -112,7 +112,9 @@ class RobotMap{
           }
         }
       }
-    )
+    ).catch(function(error){
+			console.error(error);
+		})
   }
 
 }
@@ -269,43 +271,55 @@ wsServer.on('request', function(request) {
 							uri : uri,
 							headers : {
 								"Authorization" : auth
-							}
+							},
+							timeout : 1000
 						},
 						function (error, response, body) {
 							var map_from_robot = mapFromRobotLocations(body);
-							testMaplist.setMap(map_from_robot);
-							sendMap(map_from_robot);
+							if(map_from_robot == false){
+								let json = {
+				          data : "noserver"
+				        }
+
+				        connection.send(JSON.stringify(json));
+							}
+							else{
+								testMaplist.setMap(map_from_robot);
+								sendMap(map_from_robot);
+							}
 						}
 					);
 				}
 
-				if (testMaplist.getMaplistNames().includes(name) == false){
-					var map = new RobotMap(name,[]);
-					var promise1 = Promise.resolve(map.getFromDB(name));
-					testMaplist.setMap(map);
-				}
 				else{
-					var map = testMaplist.getMapFromName(name);
-				}
-
-        if (type == 'get_map') {
-					if(promise1!=undefined){
-						promise1.then(function(value){
-							sendMap(map);
-						});
+					if (testMaplist.getMaplistNames().includes(name) == false){
+						var map = new RobotMap(name,[]);
+						var promise1 = Promise.resolve(map.getFromDB(name));
+						testMaplist.setMap(map);
 					}
 					else{
-						sendMap(map);
+						var map = testMaplist.getMapFromName(name);
 					}
-        }
 
-        else if (type == 'set_point') {
-          setPoint(val);
-        }
+	        if (type == 'get_map') {
+						if(promise1!=undefined){
+							promise1.then(function(value){
+								sendMap(map);
+							});
+						}
+						else{
+							sendMap(map);
+						}
+	        }
 
-        else {
-          unknownCommand();
-        }
+	        else if (type == 'set_point') {
+	          setPoint(val);
+	        }
+
+	        else {
+	          unknownCommand();
+	        }
+				}
       }
 
       else if (message.type === 'binary') {
@@ -325,14 +339,19 @@ wsServer.on('request', function(request) {
 //Retrieve the history of a robot's points from the server
 function mapFromRobotLocations(data){
 	let list_of_points = [];
-	let json_data = JSON.parse(data);
-	console.log(json_data[0]);
-	for(var i = 0; i<json_data.length; i++){
-		let x = json_data[i].x;
-		let y = json_data[i].y;
-		list_of_points.push([x,y, 1]);
+	if (data != undefined){
+		let json_data = JSON.parse(data);
+
+		for(var i = 0; i<json_data.length; i++){
+			let x = json_data[i].x;
+			let y = json_data[i].y;
+			list_of_points.push([x,y, 1]);
+		}
+		return new RobotMap("map_from_robot", list_of_points);
 	}
-	return new RobotMap("map_from_robot", list_of_points);
+	else{
+		return false;
+	}
 }
 
 

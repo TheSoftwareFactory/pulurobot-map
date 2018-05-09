@@ -30,6 +30,9 @@ window.onload = function(){
 	    }
 	}
 
+
+	var names = [];
+
 	function on_get_map(name, points) {
 	    points.forEach(function(point) {
 	        geoJSON.addData(buildPoint(point[0], point[1], point[2]))
@@ -38,11 +41,6 @@ window.onload = function(){
 			let list = document.getElementById('map_from_list');
 			if(list.selectedOptions[0].text=="No pre-loaded map available."){
 				list.options.length = 0;
-			}
-
-			names = [];
-			for(var i = 0; i < list.options.length; i++){
-				names.push(list.selectedOptions[i].text);
 			}
 
 			if(!names.includes(name)){
@@ -62,24 +60,55 @@ window.onload = function(){
 
 	ws.onmessage = function(msg) {
 	    var message = JSON.parse(msg.data);
+			console.log(message);
 
-	    if (message.data != undefined){
-				console.log();
-				if(message.data.length == 0){
+			if (message.data == undefined){
+				console.log("Waiting for points...");
+			}
+
+	    else {
+				if(message.data == "undefined" || message.data =="nomap" || message.data.length == 0){
 					console.log("No points available.");
+					var info = document.getElementById("information");
+					var text = document.createTextNode("No points/maps available. Add points, try another name, or check your Wi-Fi connection.");
+					var child = info.firstChild;
+					if (child != null){
+						info.removeChild(child);
+						info.appendChild(text);
+					}
+					else{
+						info.appendChild(text);
+					}
 				}
+
+				else if(message.data == "noserver"){
+					console.log("No response from server.");
+					var info = document.getElementById("information");
+					var text = document.createTextNode("Server could not be reached for location's history.");
+					var child = info.firstChild;
+					if (child != null){
+						info.removeChild(child);
+						info.appendChild(text);
+					}
+					else{
+						info.appendChild(text);
+					}
+				}
+
 				else{
 					console.log("Points are available.");
+					var info = document.getElementById("information");
+					var child = info.firstChild;
+					if (child != null){
+						info.removeChild(child);
+					}
+
 		      switch (message.type) {
 		          case "get_map": on_get_map(message.name,message.data); break;
 		          case "get_point": on_get_point(message.data); break;
 		          default: console.log(message);
 		      }
 				}
-	    }
-
-	    else{
-	      console.log("Waiting for points...");
 	    }
 	}
 
@@ -90,6 +119,16 @@ window.onload = function(){
 	function retrieveMap(name_of_map){
 		if (name_of_map === ""){
 			console.error("Map name is undefined. Input a valid name.");
+			var info = document.getElementById("information");
+			var text = document.createTextNode("Map name is undefined. Input at least one character.");
+			var child = info.firstChild;
+			if (child != null){
+				info.removeChild(child);
+				info.appendChild(text);
+			}
+			else{
+				info.appendChild(text);
+			}
 		}
 		else{
 			ws.send(JSON.stringify({

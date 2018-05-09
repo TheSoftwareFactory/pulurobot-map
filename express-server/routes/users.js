@@ -4,11 +4,11 @@ const bcrypt = require('bcrypt-nodejs');
 var User = require('../models/user');
 
 /* GET users listing. */
-router.get('/', function(req, res, next) {
+router.get('/users', function(req, res, next) {
   res.send('respond with a resource');
 });
 
-router.post('/', async(request, response) => {
+router.post('/users', async(request, response) => {
   try {
     console.log(request);
     const body = request.body;
